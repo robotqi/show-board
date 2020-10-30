@@ -1,0 +1,93 @@
+#!/bin/csh
+
+
+set GUI_DATA = $TMP/gui_data.$$
+set GUI_RESP = $TMP/gui_resp.$$
+set NORM_FNT = "hbr14"
+set NORM_COL = "222299"
+set TITLE_FONT = "hbr18"
+
+
+alias o 'echo \!:* >> $GUI_DATA'
+alias do_gui gui "$GUI_DATA > $GUI_RESP; source $GUI_RESP; \rm $GUI_RESP $GUI_DATA"
+alias o_tooling 'echo -n >! $GUI_DATA; o WIN 200 200;o FONT $TITLE_FONT;o FG 999999;o BW 1;o LABEL Genesis Automated Tooling'
+
+o_tooling
+o FONT $NORM_FNT
+o BG $NORM_COL
+o BW 0
+o LABEL Layers Display Select
+o RADIO display Options: V 1 990000
+o All Layers
+o Board Layers
+o Copper Layers
+o Signal and mixed Layers
+o Plane Layers
+o None
+o END
+
+do_gui
+
+
+echo $display
+COM clear_layers
+
+
+if ($display == 6) then 
+	COM multi_layer_disp,mode=default,show_board=no
+	exit 0
+endif
+
+if ($display == 2) then
+	COM multi_layer_disp,mode=many,show_board=yes
+	exit 0
+endif
+
+COM multi_layer_disp,mode=many,show_board=no
+@ COUNT = 1
+@ i = 1
+DO_INFO -t matrix -e $JOB/matrix
+
+if ($display == 1) then
+   foreach LAYER ($gROWname)
+      COM display_layer,name=$LAYER,display=yes,number=$COUNT
+     	@ COUNT ++
+     	if ($COUNT > 27) then
+     	    exit 0
+     	endif
+   end
+   exit 0
+endif
+
+if ($display == 3) then
+   foreach LAYER ($gROWname)
+	if ($gROWlayer_type[$i] == "power_ground" || $gROWlayer_type[$i] == "signal" || $gROWlayer_type[$i] == "mixed") then
+	      COM display_layer,name=$LAYER,display=yes,number=$COUNT
+      	@ COUNT ++
+	endif
+	@ i ++
+   end
+   exit 0
+endif
+
+if ($display == 4) then
+   foreach LAYER ($gROWname)
+	if ($gROWlayer_type[$i] == "signal" || $gROWlayer_type[$i] == "mixed") then
+	      COM display_layer,name=$LAYER,display=yes,number=$COUNT
+      	@ COUNT ++
+	endif
+	@ i ++
+   end
+   exit 0
+endif
+
+if ($display == 5) then
+   foreach LAYER ($gROWname)
+	if ($gROWlayer_type[$i] == "power_ground") then
+	      COM display_layer,name=$LAYER,display=yes,number=$COUNT
+      	@ COUNT ++
+	endif
+	@ i ++
+   end
+endif
+
